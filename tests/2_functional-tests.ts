@@ -86,9 +86,13 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "b3", value: 2 })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.valid, false);
+          assert.equal(res.body.conflict[0], "row");
+          assert.lengthOf(res.body.conflict, 3);
+          done();
         });
     });
 
@@ -96,9 +100,13 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "a2", value: 1 })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.valid, false);
+          assert.equal(res.body.conflict[0], "row");
+          assert.lengthOf(res.body.conflict, 1);
+          done();
         });
     });
 
@@ -106,9 +114,13 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "a1", value: 1 })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.valid, false);
+          assert.equal(res.body.conflict[1], "column");
+          assert.lengthOf(res.body.conflict, 2);
+          done();
         });
     });
 
@@ -116,9 +128,13 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "b3", value: 2 })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.valid, false);
+          assert.equal(res.body.conflict[2], "region");
+          assert.lengthOf(res.body.conflict, 3);
+          done();
         });
     });
 
@@ -126,9 +142,11 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "b3" })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.error, "Required field(s) missing");
+          done();
         });
     });
 
@@ -136,9 +154,11 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "b3", value: "$fafa" })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.error, "Invalid value");
+          done();
         });
     });
 
@@ -146,9 +166,14 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: INVALID_LENGTH, coordinate: "a2", value: "7" })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(
+            res.body.error,
+            "Expected puzzle to be 81 characters long"
+          );
+          done();
         });
     });
 
@@ -156,9 +181,11 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "a22", value: "7" })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.error, "Invalid coordinate");
+          done();
         });
     });
 
@@ -166,9 +193,11 @@ suite("Functional Tests", () => {
       chai
         .request(server)
         .post("/api/check")
-        .send({})
+        .send({ puzzle: VALID_PUZZLE, coordinate: "a2", value: "12" })
         .then((res) => {
-          // done()
+          assert.equal(res.status, 200);
+          assert.equal(res.body.error, "Invalid value");
+          done();
         });
     });
   });

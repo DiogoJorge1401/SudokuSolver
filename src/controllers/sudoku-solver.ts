@@ -1,14 +1,11 @@
+type ValidationFn<T> = (value: T) => boolean;
+
 export default class SudokuSolver {
   validate(puzzleStr: string) {
     if (!puzzleStr) throw new Error("Required field missing");
 
-    if (puzzleStr.length !== 81)
-      throw new Error("Expected puzzle to be 81 characters long");
-
-    const validPuzzleRegex = /^[\d.]+$/gi;
-
-    if (!validPuzzleRegex.test(puzzleStr))
-      throw new Error("Invalid characters in puzzle");
+    this.validLength(puzzleStr);
+    this.validChars(puzzleStr);
 
     const rows = this.createRows(puzzleStr);
     const cols: string[][] = [];
@@ -40,37 +37,6 @@ export default class SudokuSolver {
     }
 
     return true;
-  }
-
-  createRows(puzzleStr: string) {
-    const grid: string[][] = [];
-    const goodArr = puzzleStr.split("");
-    for (let i = 0; i < 9; i++) grid.push(goodArr.splice(0, 9));
-    return grid;
-  }
-
-  createCols(arr: string[][], colNum: number) {
-    const cols: string[] = [];
-    for (const item of arr) cols.push(item[colNum]);
-    return cols;
-  }
-
-  createGrids(puzzleStr: string) {
-    const grids: string[][] = [];
-    const subarrs: string[] = [];
-
-    for (let i = 0; i < 3; i++) subarrs.push(puzzleStr.substr(i * 27, 27));
-
-    for (const arr of subarrs)
-      for (let i = 0; i <= 6; i += 3) {
-        const grid: string[] = [];
-
-        for (let j = i; j < 27; j += 9)
-          grid.push(...arr.substr(j, 3).split(""));
-
-        grids.push(grid);
-      }
-    return grids;
   }
 
   solve(puzzleStr: string): string {
@@ -136,15 +102,137 @@ export default class SudokuSolver {
     return puzzleStr;
   }
 
-  checkRowPlacement(puzzleString, row, column, value): boolean {
-    throw new Error("Method not implemented!");
+  checkRowPlacement(
+    puzzleStr: string,
+    row: string,
+    column: number,
+    value: number
+  ): boolean {
+    const grid = this.createRows(puzzleStr);
+    const rows = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
+    const strRow = grid[rows.indexOf(row)];
+    const rowVal = strRow[column - 1];
+
+    if (+rowVal === value) strRow.splice(column - 1, 1);
+    else if (rowVal !== ".") return false;
+
+    // +strRow[column - 1] === value ? strRow.splice(column - 1, 1) : strRow;
+
+    return strRow.indexOf(value.toString()) === -1;
   }
 
-  checkColPlacement(puzzleString, row, column, value): boolean {
-    throw new Error("Method not implemented!");
+  checkColPlacement(
+    puzzleStr: string,
+    row: string,
+    column: number,
+    value: number
+  ): boolean {
+    const grid = this.createRows(puzzleStr);
+    const strCol = this.createCols(grid, column - 1);
+    const rowKey = { a: 0, b: 1, c: 2, d: 3, e: 4, f: 5, g: 6, h: 7, i: 8 };
+    const colVal = strCol[rowKey[row]];
+
+    if (+colVal === value) strCol.splice(rowKey[row], 1);
+    else if (colVal !== ".") return false;
+
+    return strCol.indexOf(value.toString()) === -1;
   }
 
-  checkRegionPlacement(puzzleString, row, column, value): boolean {
-    throw new Error("Method not implemented!");
+  checkRegionPlacement(
+    puzzleStr: string,
+    row: string,
+    column: number,
+    value: number
+  ): boolean {
+    const grids = this.createGrids(puzzleStr);
+    const key = {
+      a: 1,
+      b: 2,
+      c: 3,
+      d: 4,
+      e: 5,
+      f: 6,
+      g: 7,
+      h: 8,
+      i: 9,
+    };
+    const rowNum = key[row];
+    let grid: string[] = [];
+
+    if (rowNum <= 3) {
+      if (column <= 3) grid = grids[0];
+      else if (column <= 6) grid = grids[1];
+      else if (column <= 9) grid = grids[2];
+    } else if (rowNum <= 6) {
+      if (column <= 3) grid = grids[3];
+      else if (column <= 6) grid = grids[4];
+      else if (column <= 9) grid = grids[5];
+    } else if (rowNum <= 9) {
+      if (column <= 3) grid = grids[6];
+      else if (column <= 6) grid = grids[7];
+      else if (column <= 9) grid = grids[8];
+    }
+
+    const row_calc = { a: 0, b: 1, c: 2, d: 0, e: 1, f: 2, g: 0, h: 1, i: 2 };
+    const col_cal = (column - 1) % 3;
+    const grid_calc = row_calc[row] * 3 + col_cal;
+    const grid_val = grid[grid_calc];
+
+    if (+grid_val === value) grid.splice(grid_calc, 1);
+    else if (grid_val !== ".") return false;
+
+    return grid.indexOf(value.toString()) === -1;
+  }
+
+  requiredFields({ puzzle, coordinate, value }) {
+    if (!puzzle || !coordinate || !value)
+      throw new Error("Required field(s) missing");
+  }
+
+  validateField<T>(value: T, fn: ValidationFn<T>, errorMessage: string) {
+    if (!fn(value)) throw new Error(errorMessage);
+  }
+
+  validChars(puzzleStr: string) {
+    const validPuzzleRegex = /^[\d.]+$/gi;
+
+    if (!validPuzzleRegex.test(puzzleStr))
+      throw new Error("Invalid characters in puzzle");
+  }
+
+  validLength(puzzleStr: string) {
+    if (puzzleStr.length !== 81)
+      throw new Error("Expected puzzle to be 81 characters long");
+  }
+
+  private createRows(puzzleStr: string) {
+    const grid: string[][] = [];
+    const goodArr = puzzleStr.split("");
+    for (let i = 0; i < 9; i++) grid.push(goodArr.splice(0, 9));
+    return grid;
+  }
+
+  private createCols(arr: string[][], colNum: number) {
+    const cols: string[] = [];
+    for (const item of arr) cols.push(item[colNum]);
+    return cols;
+  }
+
+  private createGrids(puzzleStr: string) {
+    const grids: string[][] = [];
+    const subarrs: string[] = [];
+
+    for (let i = 0; i < 3; i++) subarrs.push(puzzleStr.substr(i * 27, 27));
+
+    for (const arr of subarrs)
+      for (let i = 0; i <= 6; i += 3) {
+        const grid: string[] = [];
+
+        for (let j = i; j < 27; j += 9)
+          grid.push(...arr.substr(j, 3).split(""));
+
+        grids.push(grid);
+      }
+    return grids;
   }
 }
