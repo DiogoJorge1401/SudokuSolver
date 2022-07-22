@@ -2,7 +2,7 @@ import { Application } from "express";
 import SudokuSolver from "../controllers/sudoku-solver";
 
 export default function (app: Application) {
-  let solver = new SudokuSolver();
+  const solver = new SudokuSolver();
 
   app.post("/api/check", (req, res) => {
     try {
@@ -17,17 +17,17 @@ export default function (app: Application) {
         coordinate,
         (coordinate) =>
           coordinate.length <= 2 &&
-          validRows.includes(coordinate[0]) &&
+          validRows.includes(coordinate[0].toLowerCase()) &&
           validCols.includes(+coordinate[1]),
         "Invalid coordinate"
       );
       solver.validateField<string>(
         value,
-        (value) => validCols.includes(+value),
+        (value) => validCols.includes(+value) && +value <= 9 && +value >= 1,
         "Invalid value"
       );
 
-      const row = coordinate[0];
+      const row = coordinate[0].toLowerCase();
       const col = coordinate[1];
 
       const rowCheck = solver.checkRowPlacement(puzzle, row, +col, +value);
@@ -40,8 +40,8 @@ export default function (app: Application) {
 
       if (!valid) response.conflict = [];
 
-      for(const prop in result)
-        if(!result[prop]) response.conflict.push(prop);
+      for (const prop in result)
+        if (!result[prop]) response["conflict"].push(prop);
 
       return res.json(response);
     } catch (error: any) {

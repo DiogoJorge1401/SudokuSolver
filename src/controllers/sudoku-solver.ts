@@ -116,7 +116,7 @@ export default class SudokuSolver {
     if (+rowVal === value) strRow.splice(column - 1, 1);
     else if (rowVal !== ".") return false;
 
-    // +strRow[column - 1] === value ? strRow.splice(column - 1, 1) : strRow;
+    +strRow[column - 1] === value ? strRow.splice(column - 1, 1) : strRow;
 
     return strRow.indexOf(value.toString()) === -1;
   }
